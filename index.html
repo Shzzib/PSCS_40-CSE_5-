@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .test-area {
+            text-align: center;
+        }
+
+        .progress-bar {
+            background: #f0f0f0;
+            height: 10px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .word-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .mic-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .mic-icon {
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .mic-icon.listening {
+            animation: micPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes micPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        }
+
+        .feedback {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .feedback-details {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .attempts {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        .score-text {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .score-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .leaderboard {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .leaderboard h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .leaderboard-item {
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Speech Recognition Test</h1>
+            <p>Practice your pronunciation with AI-powered feedback</p>
+        </div>
+
+        <div class="content">
+            <!-- Setup Screen -->
+            <div id="setupScreen" class="screen active">
+                <div class="form-group">
+                    <label for="username">Your Name</label>
+                    <input type="text" id="username" placeholder="Enter your name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="language">Select Language</label>
+                    <select id="language">
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mode">Test Mode</label>
+                    <select id="mode">
+                        <option value="word">Words</option>
+                        <option value="sentence">Sentences</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="testSetup()" style="margin-bottom: 10px; background: #28a745;">🔧 Test Setup</button>
+                <button class="btn btn-primary" onclick="startTest()">Start Test</button>
+                
+                <div id="setupStatus" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Test Screen -->
+            <div id="testScreen" class="screen">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+
+                <div class="word-display" id="wordDisplay">
+                    Ready...
+                </div>
+
+                <div class="mic-status">
+                    <div class="mic-icon" id="micIcon">🎤</div>
+                    <div>
+                        <strong>Listening...</strong>
+                        <div style="font-size: 0.9rem; color: #666;">Speak clearly into your microphone</div>
+                    </div>
+                </div>
+
+                <div class="attempts" id="attemptInfo"></div>
+
+                <div id="feedbackArea"></div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="resultsScreen" class="screen">
+                <div class="score-display">
+                    <div class="score-circle" id="scoreCircle">0/10</div>
+                    <div class="score-text">Test Completed! 🎉</div>
+                    <div class="score-message" id="scoreMessage"></div>
+                    <button class="btn btn-primary" onclick="resetTest()">Take Another Test</button>
+                </div>
+            </div>
+
+            <!-- Loading Screen -->
+            <div id="loadingScreen" class="screen">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Initializing speech recognition...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPromptIndex = 0;
+        let totalPrompts = 10;
+        let currentScore = 0;
+        let currentAttempt = 0;
+        let maxAttempts = 5;
+        let eventSource = null;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Test if backend is working
+        function testSetup() {
+            const statusDiv = document.getElementById('setupStatus');
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Testing setup...</div>';
+            
+            fetch('/api/test-setup')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        statusDiv.innerHTML = '<div class="feedback correct"><strong>✅ Setup OK!</strong><br>All systems ready</div>';
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="feedback incorrect">
+                                <strong>⚠️ Setup Issues:</strong><br>
+                                ${data.issues.join('<br>')}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `<div class="error-message">Cannot connect to server. Make sure Flask is running on port 5000.<br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function startTest() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Please enter your name');
+                return;
+            }
+
+            const language = document.getElementById('language').value;
+            const mode = document.getElementById('mode').value;
+
+            console.log('Starting test...', { username, language, mode });
+            showScreen('loadingScreen');
+
+            // Reset counters
+            currentPromptIndex = 0;
+            currentScore = 0;
+
+            // Start test with POST request
+            fetch('/api/start-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    language: language,
+                    mode: mode
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                showScreen('testScreen');
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                function readStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream complete');
+                            return;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        
+                        // Keep the last incomplete line in buffer
+                        buffer = lines.pop();
+
+                        lines.forEach(line => {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const jsonStr = line.substring(6).trim();
+                                    if (jsonStr) {
+                                        const data = JSON.parse(jsonStr);
+                                        console.log('Event:', data);
+                                        handleTestEvent(data);
+                                    }
+                                } catch (e) {
+                                    console.error('Parse error:', e, 'Line:', line);
+                                }
+                            }
+                        });
+
+                        readStream();
+                    }).catch(error => {
+                        console.error('Stream error:', error);
+                        showError('Connection lost. Please try again.');
+                        setTimeout(() => showScreen('setupScreen'), 3000);
+                    });
+                }
+
+                readStream();
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showError(`Failed to start test: ${error.message}<br><br>Make sure:<br>1. Flask server is running (python app.py)<br>2. Vosk models are downloaded<br>3. Dataset files exist`);
+                setTimeout(() => showScreen('setupScreen'), 5000);
+            });
+        }
+
+        function handleTestEvent(data) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            console.log('Event:', data);
+
+            switch(data.type) {
+                case 'prompt':
+                    currentPromptIndex = data.index;
+                    totalPrompts = data.total;
+                    currentAttempt = 0;
+                    
+                    updateProgress();
+                    document.getElementById('wordDisplay').textContent = data.text;
+                    document.getElementById('micIcon').classList.add('listening');
+                    document.getElementById('attemptInfo').textContent = 'Listening...';
+                    feedbackArea.innerHTML = '<div style="text-align: center; color: #667eea; padding: 20px;">🎤 Speak now...</div>';
+                    break;
+
+                case 'listening':
+                    currentAttempt = data.attempt;
+                    document.getElementById('attemptInfo').textContent = 
+                        `Attempt ${currentAttempt}/${data.max_attempts} - Listening...`;
+                    document.getElementById('micIcon').classList.add('listening');
+                    break;
+
+                case 'correct':
+                    currentScore++;
+                    document.getElementById('micIcon').classList.remove('listening');
+                    feedbackArea.innerHTML = `
+                        <div class="feedback correct">
+                            <strong>✅ Correct!</strong>
+                            <div class="feedback-details">
+                                You said: "${data.spoken}" (${Math.round(data.similarity * 100)}% match)
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'incorrect':
+                    currentAttempt = data.attempt;
+                    document.getElementById('attemptInfo').textContent = 
+                        `Attempt ${currentAttempt}/${data.max_attempts}`;
+                    
+                    feedbackArea.innerHTML = `
+                        <div class="feedback incorrect">
+                            <strong>❌ Try Again</strong>
+                            <div class="feedback-details">
+                                You said: "${data.spoken}"<br>
+                                Expected: "${data.expected}"<br>
+                                Similarity: ${Math.round(data.similarity * 100)}%
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'timeout':
+                    feedbackArea.innerHTML = `
+                        <div class="feedback incorrect">
+                            <strong>⏱️ No speech detected</strong>
+                            <div class="feedback-details">
+                                Please speak clearly into your microphone
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'failed':
+                    document.getElementById('micIcon').classList.remove('listening');
+                    feedbackArea.innerHTML = `
+                        <div class="feedback incorrect">
+                            <strong>⏭️ Moving to next word</strong>
+                            <div class="feedback-details">
+                                Maximum attempts reached for: "${data.text}"
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'complete':
+                    showResults(data.score, data.total);
+                    break;
+
+                case 'error':
+                    showError(data.message);
+                    showScreen('setupScreen');
+                    break;
+            }
+        }
+
+        function updateProgress() {
+            const percentage = (currentPromptIndex / totalPrompts) * 100;
+            document.getElementById('progressBar').style.width = percentage + '%';
+        }
+
+        function showResults(score, total) {
+            document.getElementById('scoreCircle').textContent = `${score}/${total}`;
+            
+            const percentage = (score / total) * 100;
+            let message = '';
+            
+            if (percentage >= 90) {
+                message = '🌟 Outstanding! Perfect pronunciation!';
+            } else if (percentage >= 70) {
+                message = '👏 Great job! Keep practicing!';
+            } else if (percentage >= 50) {
+                message = '👍 Good effort! You can do better!';
+            } else {
+                message = '💪 Keep practicing! You\'ll improve!';
+            }
+            
+            document.getElementById('scoreMessage').textContent = message;
+            showScreen('resultsScreen');
+        }
+
+        function showError(message) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            if (feedbackArea) {
+                feedbackArea.innerHTML = `<div class="error-message">${message}</div>`;
+            } else {
+                alert(message);
+            }
+        }
+
+        function resetTest() {
+            showScreen('setupScreen');
+            document.getElementById('feedbackArea').innerHTML = '';
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    </script>
+</body>
